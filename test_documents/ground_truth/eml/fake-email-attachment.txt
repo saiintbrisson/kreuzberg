@@ -1,8 +1,7 @@
-From: Mallori Harrell <mallori@unstructured.io>
-To: Mallori Harrell <mallori@unstructured.io>
 Subject: Fake email with attachment
-Date: Fri, 23 Dec 2022 12:08:48 -0600
-
+From: "Mallori Harrell" <mallori@unstructured.io>
+To: "Mallori Harrell" <mallori@unstructured.io>
+Date: 2022-12-23T12:08:48-06:00
 Hello!
 
 Here's the attachments!

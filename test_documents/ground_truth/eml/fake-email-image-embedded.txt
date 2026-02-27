@@ -1,8 +1,7 @@
-From: Mallori Harrell <mallori@unstructured.io>
-To: Mallori Harrell <mallori@unstructured.io>
 Subject: fake-email-image-embedded
-Date: Mon, 9 Jan 2023 15:00:43 -0600
-
+From: "Mallori Harrell" <mallori@unstructured.io>
+To: "Mallori Harrell" <mallori@unstructured.io>
+Date: 2023-01-09T15:00:43-06:00
 This is a test email to use for unit tests.
 
 Important points:

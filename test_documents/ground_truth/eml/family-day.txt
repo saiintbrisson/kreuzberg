@@ -1,8 +1,7 @@
-From: Mallori Harrell <mallori@unstructured.io>
-To: Mallori Harrell <mallori@unstructured.io>
 Subject: Family Day
-Date: Wed, 21 Dec 2022 10:28:53 -0600
-
+From: "Mallori Harrell" <mallori@unstructured.io>
+To: "Mallori Harrell" <mallori@unstructured.io>
+Date: 2022-12-21T10:28:53-06:00
 Hi All,
 
 Get excited for our first annual family day!

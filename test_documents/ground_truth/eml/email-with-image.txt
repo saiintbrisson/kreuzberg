@@ -1,8 +1,7 @@
-From: Mallori Harrell <mallori@unstructured.io>
-To: Mallori Harrell <mallori@unstructured.io>
 Subject: email-with-image
-Date: Wed, 4 Jan 2023 11:36:14 -0600
-
+From: "Mallori Harrell" <mallori@unstructured.io>
+To: "Mallori Harrell" <mallori@unstructured.io>
+Date: 2023-01-04T11:36:14-06:00
 Hi,
 
 The unstructured logo is attached to this email.
