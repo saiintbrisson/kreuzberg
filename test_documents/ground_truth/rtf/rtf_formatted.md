@@ -12,6 +12,6 @@ SMALL CAPS
 
 ~~strikeout~~
 
-x^superscript^
+x<sup>superscript</sup>
 
-x~subscript~
+x<sub>subscript</sub>

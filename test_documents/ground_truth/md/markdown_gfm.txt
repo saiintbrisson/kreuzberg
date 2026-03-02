@@ -184,21 +184,21 @@ Link to [Explicit header attributes].
 
 But this is not a link to [My other header], since the reference is defined.
 
-## Explicit header attributes {#foobar .baz key="val"}
+## Explicit header attributes
 
-> ## Header attributes inside block quote {#foobar .baz key="val"}
+> ## Header attributes inside block quote
 
 ## Line blocks
 
-| But can a bee be said to be
-|     or not to be an entire bee,
-|         when half the bee is not a bee,
-|             due to some ancient injury?
-|
-| Continuation
- line
-|   and
-       another
+But can a bee be said to be
+    or not to be an entire bee,
+        when half the bee is not a bee,
+            due to some ancient injury?
+
+Continuation
+line
+  and
+      another
 
 ## Grid Tables
 
@@ -344,7 +344,7 @@ Table with complex header:
 
 ## Reference link followed by a citation
 
-MapReduce is a paradigm popularized by [Google] [@mapreduce] as its
+MapReduce is a paradigm popularized by [Google] as its
 most vocal proponent.
 
 [Google]: http://google.com
@@ -363,4 +363,4 @@ bar
 
 ## Bracketed spans
 
-[*foo* bar baz [link](url)]{.class #id key=val}
+[*foo* bar baz [link](url)]
