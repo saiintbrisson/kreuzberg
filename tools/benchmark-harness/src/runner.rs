@@ -202,6 +202,7 @@ impl BenchmarkRunner {
                                 size_bytes: fs.size_bytes,
                                 package_bytes: fs.package_bytes,
                                 system_deps_bytes: fs.system_deps_bytes,
+                                model_bytes: fs.model_bytes,
                                 method: fs.method,
                                 description: fs.description,
                                 system_deps_detail: fs.system_deps_detail,

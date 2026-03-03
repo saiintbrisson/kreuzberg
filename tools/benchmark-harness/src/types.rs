@@ -195,6 +195,10 @@ pub struct FrameworkCapabilities {
     pub installation_size: Option<DiskSizeInfo>,
 }
 
+fn is_zero_u64(v: &u64) -> bool {
+    *v == 0
+}
+
 /// Disk installation size information for a framework
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiskSizeInfo {
@@ -208,6 +212,10 @@ pub struct DiskSizeInfo {
     /// System dependency size in bytes (libreoffice, tesseract, ffmpeg, etc.)
     #[serde(default)]
     pub system_deps_bytes: u64,
+
+    /// ML model size in bytes (auto-downloaded on first use)
+    #[serde(default, skip_serializing_if = "is_zero_u64")]
+    pub model_bytes: u64,
 
     /// Measurement method (e.g., "binary_size", "pip_package", "npm_package")
     pub method: String,

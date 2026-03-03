@@ -70,6 +70,8 @@ const MIME_MAP: Record<string, string> = {
 	".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 	".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",
 	".xlsb": "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
+	".xlam": "application/vnd.ms-excel.addin.macroEnabled.12",
+	".xla": "application/vnd.ms-excel",
 	".xls": "application/vnd.ms-excel",
 	".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 	".pptm": "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
@@ -110,6 +112,22 @@ function guessMimeType(filePath: string): string | null {
 	return MIME_MAP[ext] ?? null;
 }
 
+/** Image file extensions for OCR detection. */
+const IMAGE_EXTENSIONS = new Set([
+	".bmp",
+	".gif",
+	".jpg",
+	".jpeg",
+	".png",
+	".tiff",
+	".tif",
+	".webp",
+	".jp2",
+	".jpx",
+	".jpm",
+	".mj2",
+]);
+
 /**
  * Determine if OCR was actually used based on extraction result metadata.
  * Mirrors the native Rust adapter logic.
@@ -119,6 +137,19 @@ function determineOcrUsed(metadata: Record<string, unknown>, ocrEnabled: boolean
 	if (formatType === "ocr") return true;
 	if (formatType === "image" && ocrEnabled) return true;
 	if (formatType === "pdf" && ocrEnabled) return true;
+	return false;
+}
+
+/**
+ * Determine OCR status from file path when no metadata is available (error path).
+ * When OCR is enabled and the file is an image or PDF, report OCR as used — matching
+ * how other bindings behave (they report OCR based on configuration, not outcome).
+ */
+function determineOcrUsedFromPath(filePath: string, ocrEnabled: boolean): boolean {
+	if (!ocrEnabled) return false;
+	const ext = path.extname(filePath).toLowerCase();
+	if (IMAGE_EXTENSIONS.has(ext)) return true;
+	if (ext === ".pdf") return true;
 	return false;
 }
 
@@ -274,7 +305,7 @@ async function runServer(ocrEnabled: boolean): Promise<void> {
 				JSON.stringify({
 					error: error.message,
 					_extraction_time_ms: durationMs,
-					_ocr_used: false,
+					_ocr_used: determineOcrUsedFromPath(filePath, ocrEnabled || forceOcr),
 					_peak_memory_bytes: process.memoryUsage().rss,
 				}),
 			);

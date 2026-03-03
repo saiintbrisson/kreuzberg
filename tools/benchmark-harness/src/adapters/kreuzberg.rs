@@ -515,6 +515,9 @@ fn get_kreuzberg_wasm_supported_formats() -> Vec<String> {
         // Spreadsheets (excel-wasm feature)
         "xlsx",
         "xlsm",
+        "xlsb",
+        "xlam",
+        "xla",
         "xls",
         "ods",
         // Text formats
@@ -537,6 +540,12 @@ fn get_kreuzberg_wasm_supported_formats() -> Vec<String> {
         // Email
         "eml",
         "msg",
+        // Archives (archives feature in wasm-target)
+        "zip",
+        "tar",
+        "gz",
+        "tgz",
+        "7z",
         // Images (OCR via Tesseract WASM)
         "bmp",
         "gif",
