@@ -1129,8 +1129,8 @@ pub struct Metadata {
     pub document_version: Option<String>,
     pub abstract_text: Option<String>,
     pub output_format: Option<String>,
-    
-    /// Deprecated: Prefer using typed fields instead of dynamic access. 
+
+    /// Deprecated: Prefer using typed fields instead of dynamic access.
     /// This index signature may be removed in a future version.
     pub additional: HashMap<String, serde_json::Value>,
 }
