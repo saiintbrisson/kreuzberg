@@ -7,8 +7,8 @@ use crate::core::config::OutputFormat as KreuzbergOutputFormat;
 use crate::error::{KreuzbergError, Result};
 use crate::types::HtmlMetadata;
 use html_to_markdown_rs::{
-    ConversionOptions, MetadataConfig, OutputFormat as LibOutputFormat, convert as convert_html,
-    convert_with_tables, TableData,
+    ConversionOptions, MetadataConfig, OutputFormat as LibOutputFormat, TableData, convert as convert_html,
+    convert_with_tables,
 };
 
 /// Map Kreuzberg OutputFormat to html-to-markdown-rs OutputFormat.
@@ -172,7 +172,9 @@ pub fn convert_html_to_markdown_with_tables(
             } else {
                 result.content
             };
-            let metadata: Option<HtmlMetadata> = result.metadata.map(HtmlMetadata::from)
+            let metadata: Option<HtmlMetadata> = result
+                .metadata
+                .map(HtmlMetadata::from)
                 .and_then(|m: HtmlMetadata| if m.is_empty() { None } else { Some(m) });
             Ok((content, metadata, result.tables))
         });
@@ -189,7 +191,9 @@ pub fn convert_html_to_markdown_with_tables(
         result.content
     };
 
-    let metadata: Option<HtmlMetadata> = result.metadata.map(HtmlMetadata::from)
+    let metadata: Option<HtmlMetadata> = result
+        .metadata
+        .map(HtmlMetadata::from)
         .and_then(|m: HtmlMetadata| if m.is_empty() { None } else { Some(m) });
     Ok((content, metadata, result.tables))
 }

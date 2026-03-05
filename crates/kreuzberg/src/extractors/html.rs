@@ -49,12 +49,11 @@ impl SyncExtractor for HtmlExtractor {
             .map(|s| s.to_string())
             .unwrap_or_else(|_| String::from_utf8_lossy(content).to_string());
 
-        let (content_text, html_metadata, table_data) =
-            crate::extraction::html::convert_html_to_markdown_with_tables(
-                &html,
-                config.html_options.clone(),
-                Some(config.output_format),
-            )?;
+        let (content_text, html_metadata, table_data) = crate::extraction::html::convert_html_to_markdown_with_tables(
+            &html,
+            config.html_options.clone(),
+            Some(config.output_format),
+        )?;
 
         let tables: Vec<Table> = table_data
             .into_iter()
@@ -307,15 +306,24 @@ mod tests {
         );
 
         // Find the nested table (has Task ID header)
-        let nested = tables.iter().find(|t| {
-            t.cells.first().is_some_and(|row| row.iter().any(|c| c.contains("Task ID")))
-        }).expect("Should find nested table with Task ID header");
+        let nested = tables
+            .iter()
+            .find(|t| {
+                t.cells
+                    .first()
+                    .is_some_and(|row| row.iter().any(|c| c.contains("Task ID")))
+            })
+            .expect("Should find nested table with Task ID header");
 
         assert_eq!(nested.cells[0].len(), 3, "Nested table header should have 3 columns");
         assert!(nested.cells[0][0].contains("Task ID"));
         assert!(nested.cells[0][1].contains("Status"));
         assert!(nested.cells[0][2].contains("Priority"));
-        assert_eq!(nested.cells.len(), 3, "Nested table should have 3 rows (header + 2 data)");
+        assert_eq!(
+            nested.cells.len(),
+            3,
+            "Nested table should have 3 rows (header + 2 data)"
+        );
         assert!(nested.cells[1][0].contains("001"));
         assert!(nested.cells[1][1].contains("Completed"));
         assert!(nested.cells[2][0].contains("002"));
