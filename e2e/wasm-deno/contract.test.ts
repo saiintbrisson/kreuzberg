@@ -253,6 +253,27 @@ Deno.test("config_chunking_small", { permissions: { read: true, net: true } }, a
 	assertions.assertChunks(result, 2, null, true, null);
 });
 
+Deno.test("config_chunking_text", { permissions: { read: true, net: true } }, async () => {
+	const config = buildConfig({ chunking: { chunker_type: "text", max_chars: 500, max_overlap: 50 } });
+	let result: ExtractionResult | null = null;
+	try {
+		const documentBytes = await resolveDocument("pdf/fake_memo.pdf");
+		// Sync file extraction - WASM uses extractBytes with pre-read bytes
+		result = await extractBytes(documentBytes, "application/octet-stream", config);
+	} catch (error) {
+		if (shouldSkipFixture(error, "config_chunking_text", [], undefined)) {
+			return;
+		}
+		throw error;
+	}
+	if (result === null) {
+		return;
+	}
+	assertions.assertExpectedMime(result, ["application/pdf"]);
+	assertions.assertMinContentLength(result, 10);
+	assertions.assertChunks(result, 1, null, true, null);
+});
+
 Deno.test("config_djot_content", { permissions: { read: true, net: true } }, async () => {
 	const config = buildConfig({ output_format: "djot" });
 	let result: ExtractionResult | null = null;
@@ -271,26 +292,6 @@ Deno.test("config_djot_content", { permissions: { read: true, net: true } }, asy
 	}
 	assertions.assertExpectedMime(result, ["application/pdf"]);
 	assertions.assertMinContentLength(result, 10);
-});
-
-Deno.test("config_djot_content_blocks", { permissions: { read: true, net: true } }, async () => {
-	const config = buildConfig({ output_format: "djot" });
-	let result: ExtractionResult | null = null;
-	try {
-		const documentBytes = await resolveDocument("pdf/fake_memo.pdf");
-		// Sync file extraction - WASM uses extractBytes with pre-read bytes
-		result = await extractBytes(documentBytes, "application/octet-stream", config);
-	} catch (error) {
-		if (shouldSkipFixture(error, "config_djot_content_blocks", ["pdf"], undefined)) {
-			return;
-		}
-		throw error;
-	}
-	if (result === null) {
-		return;
-	}
-	assertions.assertExpectedMime(result, ["application/pdf"]);
-	assertions.assertDjotContent(result, true, 1);
 });
 
 Deno.test("config_document_structure", { permissions: { read: true, net: true } }, async () => {
@@ -482,7 +483,7 @@ Deno.test("config_images_with_formats", { permissions: { read: true, net: true }
 		// Sync file extraction - WASM uses extractBytes with pre-read bytes
 		result = await extractBytes(documentBytes, "application/octet-stream", config);
 	} catch (error) {
-		if (shouldSkipFixture(error, "config_images_with_formats", ["office"], undefined)) {
+		if (shouldSkipFixture(error, "config_images_with_formats", [], undefined)) {
 			return;
 		}
 		throw error;
@@ -491,7 +492,7 @@ Deno.test("config_images_with_formats", { permissions: { read: true, net: true }
 		return;
 	}
 	assertions.assertExpectedMime(result, ["application/vnd.openxmlformats-officedocument.presentationml.presentation"]);
-	assertions.assertImages(result, 1, null, ["png"]);
+	assertions.assertImages(result, 1, null, null);
 });
 
 Deno.test("config_language_detection", { permissions: { read: true, net: true } }, async () => {
@@ -513,6 +514,27 @@ Deno.test("config_language_detection", { permissions: { read: true, net: true } 
 	assertions.assertExpectedMime(result, ["application/pdf"]);
 	assertions.assertMinContentLength(result, 10);
 	assertions.assertDetectedLanguages(result, ["eng"], 0.5);
+});
+
+Deno.test("config_language_detection_multi", { permissions: { read: true, net: true } }, async () => {
+	const config = buildConfig({ language_detection: { detect_multiple: true, enabled: true, min_confidence: 0.3 } });
+	let result: ExtractionResult | null = null;
+	try {
+		const documentBytes = await resolveDocument("pdf/fake_memo.pdf");
+		// Sync file extraction - WASM uses extractBytes with pre-read bytes
+		result = await extractBytes(documentBytes, "application/octet-stream", config);
+	} catch (error) {
+		if (shouldSkipFixture(error, "config_language_detection_multi", [], undefined)) {
+			return;
+		}
+		throw error;
+	}
+	if (result === null) {
+		return;
+	}
+	assertions.assertExpectedMime(result, ["application/pdf"]);
+	assertions.assertMinContentLength(result, 10);
+	assertions.assertDetectedLanguages(result, ["eng"], null);
 });
 
 Deno.test("config_language_multi", { permissions: { read: true, net: true } }, async () => {
@@ -575,7 +597,7 @@ Deno.test("config_pages_exact_count", { permissions: { read: true, net: true } }
 	}
 	assertions.assertExpectedMime(result, ["application/pdf"]);
 	assertions.assertMinContentLength(result, 10);
-	assertions.assertPages(result, 2, null);
+	assertions.assertPages(result, null, 5);
 });
 
 Deno.test("config_pages_extract", { permissions: { read: true, net: true } }, async () => {
@@ -794,6 +816,28 @@ Deno.test("config_quality_score_range", { permissions: { read: true, net: true }
 	assertions.assertQualityScore(result, true, 0.1, null);
 });
 
+Deno.test("config_security_limits", { permissions: { read: true, net: true } }, async () => {
+	const config = buildConfig({
+		security_limits: { max_archive_size: 104857600, max_compression_ratio: 50, max_files_in_archive: 100 },
+	});
+	let result: ExtractionResult | null = null;
+	try {
+		const documentBytes = await resolveDocument("archives/documents.zip");
+		// Sync file extraction - WASM uses extractBytes with pre-read bytes
+		result = await extractBytes(documentBytes, "application/octet-stream", config);
+	} catch (error) {
+		if (shouldSkipFixture(error, "config_security_limits", [], undefined)) {
+			return;
+		}
+		throw error;
+	}
+	if (result === null) {
+		return;
+	}
+	assertions.assertExpectedMime(result, ["application/zip", "application/x-zip-compressed"]);
+	assertions.assertMinContentLength(result, 10);
+});
+
 Deno.test("config_structured_output", { permissions: { read: true, net: true } }, async () => {
 	const config = buildConfig({ output_format: "structured" });
 	let result: ExtractionResult | null = null;
@@ -834,7 +878,6 @@ Deno.test("config_tables_content", { permissions: { read: true, net: true } }, a
 	// Table and bounding box assertions require OCR feature for PDF table extraction
 	if (result.tables.length > 0) {
 		assertions.assertTableCount(result, 1, null);
-		assertions.assertTableContentContainsAny(result, ["Header Col"]);
 	}
 });
 

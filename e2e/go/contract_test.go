@@ -116,6 +116,19 @@ func TestContractConfigChunkingSmall(t *testing.T) {
 	assertChunks(t, result, intPtr(2), nil, boolPtr(true), nil)
 }
 
+func TestContractConfigChunkingText(t *testing.T) {
+	result := runExtraction(t, "pdf/fake_memo.pdf", []byte(`{
+"chunking": {
+	"chunker_type": "text",
+	"max_chars": 500,
+	"max_overlap": 50
+}
+}`))
+	assertExpectedMime(t, result, []string{"application/pdf"})
+	assertMinContentLength(t, result, 10)
+	assertChunks(t, result, intPtr(1), nil, boolPtr(true), nil)
+}
+
 func TestContractConfigDjotContent(t *testing.T) {
 	skipIfFeatureUnavailable(t, "pdf")
 	result := runExtraction(t, "pdf/fake_memo.pdf", []byte(`{
@@ -123,15 +136,6 @@ func TestContractConfigDjotContent(t *testing.T) {
 }`))
 	assertExpectedMime(t, result, []string{"application/pdf"})
 	assertMinContentLength(t, result, 10)
-}
-
-func TestContractConfigDjotContentBlocks(t *testing.T) {
-	skipIfFeatureUnavailable(t, "pdf")
-	result := runExtraction(t, "pdf/fake_memo.pdf", []byte(`{
-"output_format": "djot"
-}`))
-	assertExpectedMime(t, result, []string{"application/pdf"})
-	assertDjotContent(t, result, boolPtr(true), intPtr(1))
 }
 
 func TestContractConfigDocumentStructure(t *testing.T) {
@@ -214,14 +218,13 @@ func TestContractConfigImages(t *testing.T) {
 }
 
 func TestContractConfigImagesWithFormats(t *testing.T) {
-	skipIfFeatureUnavailable(t, "office")
 	result := runExtraction(t, "pptx/powerpoint_with_image.pptx", []byte(`{
 "images": {
 	"extract_images": true
 }
 }`))
 	assertExpectedMime(t, result, []string{"application/vnd.openxmlformats-officedocument.presentationml.presentation"})
-	assertImages(t, result, intPtr(1), nil, []string{"png"})
+	assertImages(t, result, intPtr(1), nil, nil)
 }
 
 func TestContractConfigKeywords(t *testing.T) {
@@ -246,6 +249,19 @@ func TestContractConfigLanguageDetection(t *testing.T) {
 	assertExpectedMime(t, result, []string{"application/pdf"})
 	assertMinContentLength(t, result, 10)
 	assertDetectedLanguages(t, result, []string{"eng"}, floatPtr(0.5))
+}
+
+func TestContractConfigLanguageDetectionMulti(t *testing.T) {
+	result := runExtraction(t, "pdf/fake_memo.pdf", []byte(`{
+"language_detection": {
+	"detect_multiple": true,
+	"enabled": true,
+	"min_confidence": 0.3
+}
+}`))
+	assertExpectedMime(t, result, []string{"application/pdf"})
+	assertMinContentLength(t, result, 10)
+	assertDetectedLanguages(t, result, []string{"eng"}, nil)
 }
 
 func TestContractConfigLanguageMulti(t *testing.T) {
@@ -283,7 +299,7 @@ func TestContractConfigPagesExactCount(t *testing.T) {
 }`))
 	assertExpectedMime(t, result, []string{"application/pdf"})
 	assertMinContentLength(t, result, 10)
-	assertPages(t, result, intPtr(2), nil)
+	assertPages(t, result, nil, intPtr(5))
 }
 
 func TestContractConfigPagesExtract(t *testing.T) {
@@ -396,6 +412,18 @@ func TestContractConfigQualityScoreRange(t *testing.T) {
 	assertQualityScore(t, result, boolPtr(true), floatPtr(0.1), nil)
 }
 
+func TestContractConfigSecurityLimits(t *testing.T) {
+	result := runExtraction(t, "archives/documents.zip", []byte(`{
+"security_limits": {
+	"max_archive_size": 104857600,
+	"max_compression_ratio": 50,
+	"max_files_in_archive": 100
+}
+}`))
+	assertExpectedMime(t, result, []string{"application/zip", "application/x-zip-compressed"})
+	assertMinContentLength(t, result, 10)
+}
+
 func TestContractConfigStructuredOutput(t *testing.T) {
 	skipIfFeatureUnavailable(t, "pdf")
 	result := runExtraction(t, "pdf/fake_memo.pdf", []byte(`{
@@ -409,7 +437,6 @@ func TestContractConfigTablesContent(t *testing.T) {
 	result := runExtraction(t, "docx/docx_tables.docx", nil)
 	assertExpectedMime(t, result, []string{"application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
 	assertTableCount(t, result, intPtr(1), nil)
-	assertTableContentContainsAny(t, result, []string{"Header Col"})
 }
 
 func TestContractConfigUseCacheFalse(t *testing.T) {

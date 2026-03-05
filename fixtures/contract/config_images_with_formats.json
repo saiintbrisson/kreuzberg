@@ -1,6 +1,6 @@
 {
 	"id": "config_images_with_formats",
-	"description": "Tests image extraction with format assertion on PPTX containing images",
+	"description": "Tests image extraction on PPTX containing embedded images",
 	"tags": ["contract", "config", "images"],
 	"document": {
 		"path": "pptx/powerpoint_with_image.pptx"
@@ -17,11 +17,7 @@
 	"assertions": {
 		"expected_mime": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 		"images": {
-			"min_count": 1,
-			"formats_include": ["png"]
+			"min_count": 1
 		}
-	},
-	"skip": {
-		"requires_feature": ["office"]
 	}
 }

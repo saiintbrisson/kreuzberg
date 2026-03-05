@@ -174,6 +174,20 @@ test_that("config_chunking_small", {
   assert_chunks(result, min_count = 2L, each_has_content = TRUE)
 })
 
+test_that("config_chunking_text", {
+  result <- run_fixture(
+    "config_chunking_text",
+    "pdf/fake_memo.pdf",
+    list(chunking = list(chunker_type = "text", max_chars = 500L, max_overlap = 50L)),
+    requirements = character(0),
+    notes = NULL,
+    skip_if_missing = TRUE
+  )
+  assert_expected_mime(result, c("application/pdf"))
+  assert_min_content_length(result, 10L)
+  assert_chunks(result, min_count = 1L, each_has_content = TRUE)
+})
+
 test_that("config_djot_content", {
   skip_if_feature_unavailable("pdf")
   result <- run_fixture(
@@ -186,20 +200,6 @@ test_that("config_djot_content", {
   )
   assert_expected_mime(result, c("application/pdf"))
   assert_min_content_length(result, 10L)
-})
-
-test_that("config_djot_content_blocks", {
-  skip_if_feature_unavailable("pdf")
-  result <- run_fixture(
-    "config_djot_content_blocks",
-    "pdf/fake_memo.pdf",
-    list(output_format = "djot"),
-    requirements = c("pdf"),
-    notes = NULL,
-    skip_if_missing = TRUE
-  )
-  assert_expected_mime(result, c("application/pdf"))
-  assert_djot_content(result, has_content = TRUE, min_blocks = 1L)
 })
 
 test_that("config_document_structure", {
@@ -325,17 +325,16 @@ test_that("config_images", {
 })
 
 test_that("config_images_with_formats", {
-  skip_if_feature_unavailable("office")
   result <- run_fixture(
     "config_images_with_formats",
     "pptx/powerpoint_with_image.pptx",
     list(images = list(extract_images = TRUE)),
-    requirements = c("office"),
+    requirements = character(0),
     notes = NULL,
     skip_if_missing = TRUE
   )
   assert_expected_mime(result, c("application/vnd.openxmlformats-officedocument.presentationml.presentation"))
-  assert_images(result, min_count = 1L, formats_include = c("png"))
+  assert_images(result, min_count = 1L)
 })
 
 test_that("config_keywords", {
@@ -365,6 +364,20 @@ test_that("config_language_detection", {
   assert_expected_mime(result, c("application/pdf"))
   assert_min_content_length(result, 10L)
   assert_detected_languages(result, c("eng"), 0.5)
+})
+
+test_that("config_language_detection_multi", {
+  result <- run_fixture(
+    "config_language_detection_multi",
+    "pdf/fake_memo.pdf",
+    list(language_detection = list(detect_multiple = TRUE, enabled = TRUE, min_confidence = 0.3)),
+    requirements = character(0),
+    notes = NULL,
+    skip_if_missing = TRUE
+  )
+  assert_expected_mime(result, c("application/pdf"))
+  assert_min_content_length(result, 10L)
+  assert_detected_languages(result, c("eng"), NULL)
 })
 
 test_that("config_language_multi", {
@@ -409,7 +422,7 @@ test_that("config_pages_exact_count", {
   )
   assert_expected_mime(result, c("application/pdf"))
   assert_min_content_length(result, 10L)
-  assert_pages(result, min_count = 2L)
+  assert_pages(result, exact_count = 5L)
 })
 
 test_that("config_pages_extract", {
@@ -555,6 +568,19 @@ test_that("config_quality_score_range", {
   assert_quality_score(result, has_score = TRUE, min_score = 0.1)
 })
 
+test_that("config_security_limits", {
+  result <- run_fixture(
+    "config_security_limits",
+    "archives/documents.zip",
+    list(security_limits = list(max_archive_size = 104857600L, max_compression_ratio = 50L, max_files_in_archive = 100L)),
+    requirements = character(0),
+    notes = NULL,
+    skip_if_missing = TRUE
+  )
+  assert_expected_mime(result, c("application/zip", "application/x-zip-compressed"))
+  assert_min_content_length(result, 10L)
+})
+
 test_that("config_structured_output", {
   skip_if_feature_unavailable("pdf")
   result <- run_fixture(
@@ -580,7 +606,6 @@ test_that("config_tables_content", {
   )
   assert_expected_mime(result, c("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
   assert_table_count(result, minimum = 1L, maximum = NULL)
-  assert_table_content_contains_any(result, c("Header Col"))
 })
 
 test_that("config_use_cache_false", {

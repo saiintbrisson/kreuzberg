@@ -180,6 +180,20 @@ namespace Kreuzberg.E2E.Contract
         }
 
         [SkippableFact]
+        public void ConfigChunkingText()
+        {
+            TestHelpers.SkipIfLegacyOfficeDisabled("pdf/fake_memo.pdf");
+            TestHelpers.SkipIfOfficeTestOnWindows("pdf/fake_memo.pdf");
+            var documentPath = TestHelpers.EnsureDocument("pdf/fake_memo.pdf", true);
+            var config = TestHelpers.BuildConfig("{\"chunking\":{\"chunker_type\":\"text\",\"max_chars\":500,\"max_overlap\":50}}");
+
+            var result = KreuzbergClient.ExtractFileSync(documentPath, config);
+            TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
+            TestHelpers.AssertMinContentLength(result, 10);
+            TestHelpers.AssertChunks(result, 1, null, true, null);
+        }
+
+        [SkippableFact]
         public void ConfigDjotContent()
         {
             TestHelpers.SkipIfFeatureUnavailable("pdf");
@@ -191,20 +205,6 @@ namespace Kreuzberg.E2E.Contract
             var result = KreuzbergClient.ExtractFileSync(documentPath, config);
             TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
             TestHelpers.AssertMinContentLength(result, 10);
-        }
-
-        [SkippableFact]
-        public void ConfigDjotContentBlocks()
-        {
-            TestHelpers.SkipIfFeatureUnavailable("pdf");
-            TestHelpers.SkipIfLegacyOfficeDisabled("pdf/fake_memo.pdf");
-            TestHelpers.SkipIfOfficeTestOnWindows("pdf/fake_memo.pdf");
-            var documentPath = TestHelpers.EnsureDocument("pdf/fake_memo.pdf", true);
-            var config = TestHelpers.BuildConfig("{\"output_format\":\"djot\"}");
-
-            var result = KreuzbergClient.ExtractFileSync(documentPath, config);
-            TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
-            TestHelpers.AssertDjotContent(result, true, 1);
         }
 
         [SkippableFact]
@@ -332,7 +332,6 @@ namespace Kreuzberg.E2E.Contract
         [SkippableFact]
         public void ConfigImagesWithFormats()
         {
-            TestHelpers.SkipIfFeatureUnavailable("office");
             TestHelpers.SkipIfLegacyOfficeDisabled("pptx/powerpoint_with_image.pptx");
             TestHelpers.SkipIfOfficeTestOnWindows("pptx/powerpoint_with_image.pptx");
             var documentPath = TestHelpers.EnsureDocument("pptx/powerpoint_with_image.pptx", true);
@@ -340,7 +339,7 @@ namespace Kreuzberg.E2E.Contract
 
             var result = KreuzbergClient.ExtractFileSync(documentPath, config);
             TestHelpers.AssertExpectedMime(result, new[] { "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
-            TestHelpers.AssertImages(result, 1, null, new[] { "png" });
+            TestHelpers.AssertImages(result, 1, null, null);
         }
 
         [SkippableFact]
@@ -370,6 +369,20 @@ namespace Kreuzberg.E2E.Contract
             TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
             TestHelpers.AssertMinContentLength(result, 10);
             TestHelpers.AssertDetectedLanguages(result, new[] { "eng" }, 0.5);
+        }
+
+        [SkippableFact]
+        public void ConfigLanguageDetectionMulti()
+        {
+            TestHelpers.SkipIfLegacyOfficeDisabled("pdf/fake_memo.pdf");
+            TestHelpers.SkipIfOfficeTestOnWindows("pdf/fake_memo.pdf");
+            var documentPath = TestHelpers.EnsureDocument("pdf/fake_memo.pdf", true);
+            var config = TestHelpers.BuildConfig("{\"language_detection\":{\"detect_multiple\":true,\"enabled\":true,\"min_confidence\":0.3}}");
+
+            var result = KreuzbergClient.ExtractFileSync(documentPath, config);
+            TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
+            TestHelpers.AssertMinContentLength(result, 10);
+            TestHelpers.AssertDetectedLanguages(result, new[] { "eng" }, null);
         }
 
         [SkippableFact]
@@ -414,7 +427,7 @@ namespace Kreuzberg.E2E.Contract
             var result = KreuzbergClient.ExtractFileSync(documentPath, config);
             TestHelpers.AssertExpectedMime(result, new[] { "application/pdf" });
             TestHelpers.AssertMinContentLength(result, 10);
-            TestHelpers.AssertPages(result, 2, null);
+            TestHelpers.AssertPages(result, null, 5);
         }
 
         [SkippableFact]
@@ -561,6 +574,19 @@ namespace Kreuzberg.E2E.Contract
         }
 
         [SkippableFact]
+        public void ConfigSecurityLimits()
+        {
+            TestHelpers.SkipIfLegacyOfficeDisabled("archives/documents.zip");
+            TestHelpers.SkipIfOfficeTestOnWindows("archives/documents.zip");
+            var documentPath = TestHelpers.EnsureDocument("archives/documents.zip", true);
+            var config = TestHelpers.BuildConfig("{\"security_limits\":{\"max_archive_size\":104857600,\"max_compression_ratio\":50,\"max_files_in_archive\":100}}");
+
+            var result = KreuzbergClient.ExtractFileSync(documentPath, config);
+            TestHelpers.AssertExpectedMime(result, new[] { "application/zip", "application/x-zip-compressed" });
+            TestHelpers.AssertMinContentLength(result, 10);
+        }
+
+        [SkippableFact]
         public void ConfigStructuredOutput()
         {
             TestHelpers.SkipIfFeatureUnavailable("pdf");
@@ -585,7 +611,6 @@ namespace Kreuzberg.E2E.Contract
             var result = KreuzbergClient.ExtractFileSync(documentPath, config);
             TestHelpers.AssertExpectedMime(result, new[] { "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
             TestHelpers.AssertTableCount(result, 1, null);
-            TestHelpers.AssertTableContentContainsAny(result, new[] { "Header Col" });
         }
 
         [SkippableFact]

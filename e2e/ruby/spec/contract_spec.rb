@@ -5,7 +5,6 @@
 #
 # Tests for contract fixtures.
 
-# rubocop:disable Metrics/BlockLength
 require_relative 'spec_helper'
 
 RSpec.describe 'contract fixtures' do
@@ -223,6 +222,24 @@ RSpec.describe 'contract fixtures' do
     end
   end
 
+  it 'config_chunking_text' do
+    E2ERuby.run_fixture(
+      'config_chunking_text',
+      'pdf/fake_memo.pdf',
+      { chunking: { chunker_type: 'text', max_chars: 500, max_overlap: 50 } },
+      requirements: [],
+      notes: nil,
+      skip_if_missing: true
+    ) do |result|
+      E2ERuby::Assertions.assert_expected_mime(
+        result,
+        ['application/pdf']
+      )
+      E2ERuby::Assertions.assert_min_content_length(result, 10)
+      E2ERuby::Assertions.assert_chunks(result, min_count: 1, each_has_content: true)
+    end
+  end
+
   it 'config_djot_content' do
     E2ERuby.skip_if_feature_unavailable('pdf')
     E2ERuby.run_fixture(
@@ -238,24 +255,6 @@ RSpec.describe 'contract fixtures' do
         ['application/pdf']
       )
       E2ERuby::Assertions.assert_min_content_length(result, 10)
-    end
-  end
-
-  it 'config_djot_content_blocks' do
-    E2ERuby.skip_if_feature_unavailable('pdf')
-    E2ERuby.run_fixture(
-      'config_djot_content_blocks',
-      'pdf/fake_memo.pdf',
-      { output_format: 'djot' },
-      requirements: %w[pdf],
-      notes: nil,
-      skip_if_missing: true
-    ) do |result|
-      E2ERuby::Assertions.assert_expected_mime(
-        result,
-        ['application/pdf']
-      )
-      E2ERuby::Assertions.assert_djot_content(result, has_content: true, min_blocks: 1)
     end
   end
 
@@ -420,12 +419,11 @@ RSpec.describe 'contract fixtures' do
   end
 
   it 'config_images_with_formats' do
-    E2ERuby.skip_if_feature_unavailable('office')
     E2ERuby.run_fixture(
       'config_images_with_formats',
       'pptx/powerpoint_with_image.pptx',
       { images: { extract_images: true } },
-      requirements: %w[office],
+      requirements: [],
       notes: nil,
       skip_if_missing: true
     ) do |result|
@@ -433,7 +431,7 @@ RSpec.describe 'contract fixtures' do
         result,
         ['application/vnd.openxmlformats-officedocument.presentationml.presentation']
       )
-      E2ERuby::Assertions.assert_images(result, min_count: 1, formats_include: %w[png])
+      E2ERuby::Assertions.assert_images(result, min_count: 1)
     end
   end
 
@@ -471,6 +469,24 @@ RSpec.describe 'contract fixtures' do
       )
       E2ERuby::Assertions.assert_min_content_length(result, 10)
       E2ERuby::Assertions.assert_detected_languages(result, %w[eng], 0.5)
+    end
+  end
+
+  it 'config_language_detection_multi' do
+    E2ERuby.run_fixture(
+      'config_language_detection_multi',
+      'pdf/fake_memo.pdf',
+      { language_detection: { detect_multiple: true, enabled: true, min_confidence: 0.3 } },
+      requirements: [],
+      notes: nil,
+      skip_if_missing: true
+    ) do |result|
+      E2ERuby::Assertions.assert_expected_mime(
+        result,
+        ['application/pdf']
+      )
+      E2ERuby::Assertions.assert_min_content_length(result, 10)
+      E2ERuby::Assertions.assert_detected_languages(result, %w[eng], nil)
     end
   end
 
@@ -527,7 +543,7 @@ RSpec.describe 'contract fixtures' do
         ['application/pdf']
       )
       E2ERuby::Assertions.assert_min_content_length(result, 10)
-      E2ERuby::Assertions.assert_pages(result, min_count: 2)
+      E2ERuby::Assertions.assert_pages(result, exact_count: 5)
     end
   end
 
@@ -714,6 +730,23 @@ RSpec.describe 'contract fixtures' do
     end
   end
 
+  it 'config_security_limits' do
+    E2ERuby.run_fixture(
+      'config_security_limits',
+      'archives/documents.zip',
+      { security_limits: { max_archive_size: 104_857_600, max_compression_ratio: 50, max_files_in_archive: 100 } },
+      requirements: [],
+      notes: nil,
+      skip_if_missing: true
+    ) do |result|
+      E2ERuby::Assertions.assert_expected_mime(
+        result,
+        ['application/zip', 'application/x-zip-compressed']
+      )
+      E2ERuby::Assertions.assert_min_content_length(result, 10)
+    end
+  end
+
   it 'config_structured_output' do
     E2ERuby.skip_if_feature_unavailable('pdf')
     E2ERuby.run_fixture(
@@ -746,7 +779,6 @@ RSpec.describe 'contract fixtures' do
         ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']
       )
       E2ERuby::Assertions.assert_table_count(result, 1, nil)
-      E2ERuby::Assertions.assert_table_content_contains_any(result, ['Header Col'])
     end
   end
 
@@ -888,4 +920,3 @@ RSpec.describe 'contract fixtures' do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength

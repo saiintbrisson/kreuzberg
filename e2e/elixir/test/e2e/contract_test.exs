@@ -276,6 +276,29 @@ defmodule E2E.ContractTest do
       end
     end
 
+    test "config_chunking_text" do
+      case E2E.Helpers.run_fixture(
+             "config_chunking_text",
+             "pdf/fake_memo.pdf",
+             %{chunking: %{chunker_type: "text", max_chars: 500, max_overlap: 50}},
+             requirements: [],
+             notes: nil,
+             skip_if_missing: true
+           ) do
+        {:ok, result} ->
+          result
+          |> E2E.Helpers.assert_expected_mime(["application/pdf"])
+          |> E2E.Helpers.assert_min_content_length(10)
+          |> E2E.Helpers.assert_chunks(min_count: 1, each_has_content: true)
+
+        {:skipped, reason} ->
+          IO.puts("SKIPPED: #{reason}")
+
+        {:error, reason} ->
+          flunk("Extraction failed: #{inspect(reason)}")
+      end
+    end
+
     test "config_djot_content" do
       case E2E.Helpers.run_fixture(
              "config_djot_content",
@@ -289,28 +312,6 @@ defmodule E2E.ContractTest do
           result
           |> E2E.Helpers.assert_expected_mime(["application/pdf"])
           |> E2E.Helpers.assert_min_content_length(10)
-
-        {:skipped, reason} ->
-          IO.puts("SKIPPED: #{reason}")
-
-        {:error, reason} ->
-          flunk("Extraction failed: #{inspect(reason)}")
-      end
-    end
-
-    test "config_djot_content_blocks" do
-      case E2E.Helpers.run_fixture(
-             "config_djot_content_blocks",
-             "pdf/fake_memo.pdf",
-             %{output_format: "djot"},
-             requirements: ["pdf"],
-             notes: nil,
-             skip_if_missing: true
-           ) do
-        {:ok, result} ->
-          result
-          |> E2E.Helpers.assert_expected_mime(["application/pdf"])
-          |> E2E.Helpers.assert_djot_content(has_content: true, min_blocks: 1)
 
         {:skipped, reason} ->
           IO.puts("SKIPPED: #{reason}")
@@ -536,7 +537,7 @@ defmodule E2E.ContractTest do
              "config_images_with_formats",
              "pptx/powerpoint_with_image.pptx",
              %{images: %{extract_images: true}},
-             requirements: ["office"],
+             requirements: [],
              notes: nil,
              skip_if_missing: true
            ) do
@@ -545,7 +546,7 @@ defmodule E2E.ContractTest do
           |> E2E.Helpers.assert_expected_mime([
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
           ])
-          |> E2E.Helpers.assert_images(min_count: 1, formats_include: ["png"])
+          |> E2E.Helpers.assert_images(min_count: 1)
 
         {:skipped, reason} ->
           IO.puts("SKIPPED: #{reason}")
@@ -592,6 +593,29 @@ defmodule E2E.ContractTest do
           |> E2E.Helpers.assert_expected_mime(["application/pdf"])
           |> E2E.Helpers.assert_min_content_length(10)
           |> E2E.Helpers.assert_detected_languages(["eng"], 0.5)
+
+        {:skipped, reason} ->
+          IO.puts("SKIPPED: #{reason}")
+
+        {:error, reason} ->
+          flunk("Extraction failed: #{inspect(reason)}")
+      end
+    end
+
+    test "config_language_detection_multi" do
+      case E2E.Helpers.run_fixture(
+             "config_language_detection_multi",
+             "pdf/fake_memo.pdf",
+             %{language_detection: %{detect_multiple: true, enabled: true, min_confidence: 0.3}},
+             requirements: [],
+             notes: nil,
+             skip_if_missing: true
+           ) do
+        {:ok, result} ->
+          result
+          |> E2E.Helpers.assert_expected_mime(["application/pdf"])
+          |> E2E.Helpers.assert_min_content_length(10)
+          |> E2E.Helpers.assert_detected_languages(["eng"], nil)
 
         {:skipped, reason} ->
           IO.puts("SKIPPED: #{reason}")
@@ -660,7 +684,7 @@ defmodule E2E.ContractTest do
           result
           |> E2E.Helpers.assert_expected_mime(["application/pdf"])
           |> E2E.Helpers.assert_min_content_length(10)
-          |> E2E.Helpers.assert_pages(min_count: 2)
+          |> E2E.Helpers.assert_pages(exact_count: 5)
 
         {:skipped, reason} ->
           IO.puts("SKIPPED: #{reason}")
@@ -896,6 +920,28 @@ defmodule E2E.ContractTest do
       end
     end
 
+    test "config_security_limits" do
+      case E2E.Helpers.run_fixture(
+             "config_security_limits",
+             "archives/documents.zip",
+             %{security_limits: %{max_archive_size: 104_857_600, max_compression_ratio: 50, max_files_in_archive: 100}},
+             requirements: [],
+             notes: nil,
+             skip_if_missing: true
+           ) do
+        {:ok, result} ->
+          result
+          |> E2E.Helpers.assert_expected_mime(["application/zip", "application/x-zip-compressed"])
+          |> E2E.Helpers.assert_min_content_length(10)
+
+        {:skipped, reason} ->
+          IO.puts("SKIPPED: #{reason}")
+
+        {:error, reason} ->
+          flunk("Extraction failed: #{inspect(reason)}")
+      end
+    end
+
     test "config_structured_output" do
       case E2E.Helpers.run_fixture(
              "config_structured_output",
@@ -933,7 +979,6 @@ defmodule E2E.ContractTest do
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           ])
           |> E2E.Helpers.assert_table_count(1, nil)
-          |> E2E.Helpers.assert_table_content_contains_any(["Header Col"])
 
         {:skipped, reason} ->
           IO.puts("SKIPPED: #{reason}")

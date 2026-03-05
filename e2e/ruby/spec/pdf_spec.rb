@@ -5,7 +5,6 @@
 #
 # Tests for pdf fixtures.
 
-# rubocop:disable Metrics/BlockLength
 require_relative 'spec_helper'
 
 RSpec.describe 'pdf fixtures' do
@@ -305,4 +304,3 @@ RSpec.describe 'pdf fixtures' do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength

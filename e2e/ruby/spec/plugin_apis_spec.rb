@@ -7,8 +7,6 @@
 # Generated from plugin API fixtures.
 # To regenerate: cargo run -p kreuzberg-e2e-generator -- generate --lang ruby
 
-# rubocop:disable Metrics/BlockLength
-
 require 'spec_helper'
 require 'tmpdir'
 require 'fileutils'
@@ -53,7 +51,7 @@ RSpec.describe 'Plugin APIs' do
         expect(config.chunking.max_chars).to eq(100)
         expect(config.chunking.max_overlap).to eq(20)
         expect(config.language_detection).not_to be_nil
-        expect(config.language_detection.enabled).to eq(false)
+        expect(config.language_detection.enabled).to be(false)
       end
     end
   end
@@ -78,7 +76,7 @@ RSpec.describe 'Plugin APIs' do
 
   describe 'Mime Utilities' do
     it 'Detect MIME type from file bytes' do
-      test_bytes = '%PDF-1.4\\n'.dup.force_encoding('ASCII-8BIT')
+      test_bytes = (+'%PDF-1.4\\n').force_encoding('ASCII-8BIT')
       result = Kreuzberg.detect_mime_type(test_bytes)
       expect(result.downcase).to include('pdf')
     end
@@ -144,5 +142,3 @@ RSpec.describe 'Plugin APIs' do
     end
   end
 end
-
-# rubocop:enable Metrics/BlockLength

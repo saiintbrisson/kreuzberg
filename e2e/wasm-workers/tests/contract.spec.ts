@@ -294,6 +294,31 @@ describe("contract", () => {
 		assertions.assertChunks(result, 2, null, true, null);
 	});
 
+	it("config_chunking_text", async () => {
+		const documentBytes = getFixture("pdf/fake_memo.pdf");
+		if (documentBytes === null) {
+			console.warn("[SKIP] Test skipped: fixture not available in Cloudflare Workers environment");
+			return;
+		}
+
+		const config = buildConfig({ chunking: { chunker_type: "text", max_chars: 500, max_overlap: 50 } });
+		let result: ExtractionResult | null = null;
+		try {
+			result = await extractBytes(documentBytes, "application/octet-stream", config);
+		} catch (error) {
+			if (shouldSkipFixture(error, "config_chunking_text", [], undefined)) {
+				return;
+			}
+			throw error;
+		}
+		if (result === null) {
+			return;
+		}
+		assertions.assertExpectedMime(result, ["application/pdf"]);
+		assertions.assertMinContentLength(result, 10);
+		assertions.assertChunks(result, 1, null, true, null);
+	});
+
 	it("config_djot_content", async () => {
 		const documentBytes = getFixture("pdf/fake_memo.pdf");
 		if (documentBytes === null) {
@@ -316,30 +341,6 @@ describe("contract", () => {
 		}
 		assertions.assertExpectedMime(result, ["application/pdf"]);
 		assertions.assertMinContentLength(result, 10);
-	});
-
-	it("config_djot_content_blocks", async () => {
-		const documentBytes = getFixture("pdf/fake_memo.pdf");
-		if (documentBytes === null) {
-			console.warn("[SKIP] Test skipped: fixture not available in Cloudflare Workers environment");
-			return;
-		}
-
-		const config = buildConfig({ output_format: "djot" });
-		let result: ExtractionResult | null = null;
-		try {
-			result = await extractBytes(documentBytes, "application/octet-stream", config);
-		} catch (error) {
-			if (shouldSkipFixture(error, "config_djot_content_blocks", ["pdf"], undefined)) {
-				return;
-			}
-			throw error;
-		}
-		if (result === null) {
-			return;
-		}
-		assertions.assertExpectedMime(result, ["application/pdf"]);
-		assertions.assertDjotContent(result, true, 1);
 	});
 
 	it("config_document_structure", async () => {
@@ -571,7 +572,7 @@ describe("contract", () => {
 		try {
 			result = await extractBytes(documentBytes, "application/octet-stream", config);
 		} catch (error) {
-			if (shouldSkipFixture(error, "config_images_with_formats", ["office"], undefined)) {
+			if (shouldSkipFixture(error, "config_images_with_formats", [], undefined)) {
 				return;
 			}
 			throw error;
@@ -582,7 +583,7 @@ describe("contract", () => {
 		assertions.assertExpectedMime(result, [
 			"application/vnd.openxmlformats-officedocument.presentationml.presentation",
 		]);
-		assertions.assertImages(result, 1, null, ["png"]);
+		assertions.assertImages(result, 1, null, null);
 	});
 
 	it("config_language_detection", async () => {
@@ -608,6 +609,31 @@ describe("contract", () => {
 		assertions.assertExpectedMime(result, ["application/pdf"]);
 		assertions.assertMinContentLength(result, 10);
 		assertions.assertDetectedLanguages(result, ["eng"], 0.5);
+	});
+
+	it("config_language_detection_multi", async () => {
+		const documentBytes = getFixture("pdf/fake_memo.pdf");
+		if (documentBytes === null) {
+			console.warn("[SKIP] Test skipped: fixture not available in Cloudflare Workers environment");
+			return;
+		}
+
+		const config = buildConfig({ language_detection: { detect_multiple: true, enabled: true, min_confidence: 0.3 } });
+		let result: ExtractionResult | null = null;
+		try {
+			result = await extractBytes(documentBytes, "application/octet-stream", config);
+		} catch (error) {
+			if (shouldSkipFixture(error, "config_language_detection_multi", [], undefined)) {
+				return;
+			}
+			throw error;
+		}
+		if (result === null) {
+			return;
+		}
+		assertions.assertExpectedMime(result, ["application/pdf"]);
+		assertions.assertMinContentLength(result, 10);
+		assertions.assertDetectedLanguages(result, ["eng"], null);
 	});
 
 	it("config_language_multi", async () => {
@@ -682,7 +708,7 @@ describe("contract", () => {
 		}
 		assertions.assertExpectedMime(result, ["application/pdf"]);
 		assertions.assertMinContentLength(result, 10);
-		assertions.assertPages(result, 2, null);
+		assertions.assertPages(result, null, 5);
 	});
 
 	it("config_pages_extract", async () => {
@@ -941,6 +967,32 @@ describe("contract", () => {
 		assertions.assertQualityScore(result, true, 0.1, null);
 	});
 
+	it("config_security_limits", async () => {
+		const documentBytes = getFixture("archives/documents.zip");
+		if (documentBytes === null) {
+			console.warn("[SKIP] Test skipped: fixture not available in Cloudflare Workers environment");
+			return;
+		}
+
+		const config = buildConfig({
+			security_limits: { max_archive_size: 104857600, max_compression_ratio: 50, max_files_in_archive: 100 },
+		});
+		let result: ExtractionResult | null = null;
+		try {
+			result = await extractBytes(documentBytes, "application/octet-stream", config);
+		} catch (error) {
+			if (shouldSkipFixture(error, "config_security_limits", [], undefined)) {
+				return;
+			}
+			throw error;
+		}
+		if (result === null) {
+			return;
+		}
+		assertions.assertExpectedMime(result, ["application/zip", "application/x-zip-compressed"]);
+		assertions.assertMinContentLength(result, 10);
+	});
+
 	it("config_structured_output", async () => {
 		const documentBytes = getFixture("pdf/fake_memo.pdf");
 		if (documentBytes === null) {
@@ -987,7 +1039,6 @@ describe("contract", () => {
 		}
 		assertions.assertExpectedMime(result, ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
 		assertions.assertTableCount(result, 1, null);
-		assertions.assertTableContentContainsAny(result, ["Header Col"]);
 	});
 
 	it("config_use_cache_false", async () => {

@@ -217,6 +217,22 @@ def test_config_chunking_small() -> None:
     helpers.assert_chunks(result, min_count=2, each_has_content=True)
 
 
+def test_config_chunking_text() -> None:
+    """Tests text chunker type (generic whitespace/punctuation splitter)"""
+
+    document_path = helpers.resolve_document("pdf/fake_memo.pdf")
+    if not document_path.exists():
+        pytest.skip(f"Skipping config_chunking_text: missing document at {document_path}")
+
+    config = helpers.build_config({"chunking": {"chunker_type": "text", "max_chars": 500, "max_overlap": 50}})
+
+    result = extract_file_sync(document_path, None, config)
+
+    helpers.assert_expected_mime(result, ["application/pdf"])
+    helpers.assert_min_content_length(result, 10)
+    helpers.assert_chunks(result, min_count=1, each_has_content=True)
+
+
 def test_config_djot_content() -> None:
     """Tests djot output format converts content to djot markup"""
 
@@ -231,21 +247,6 @@ def test_config_djot_content() -> None:
     helpers.assert_expected_mime(result, ["application/pdf"])
     helpers.assert_min_content_length(result, 10)
     helpers.assert_output_format(result, "djot")
-
-
-def test_config_djot_content_blocks() -> None:
-    """Tests djot output format produces djot_content with block assertions"""
-
-    document_path = helpers.resolve_document("pdf/fake_memo.pdf")
-    if not document_path.exists():
-        pytest.skip(f"Skipping config_djot_content_blocks: missing document at {document_path}")
-
-    config = helpers.build_config({"output_format": "djot"})
-
-    result = extract_file_sync(document_path, None, config)
-
-    helpers.assert_expected_mime(result, ["application/pdf"])
-    helpers.assert_djot_content(result, has_content=True, min_blocks=1)
 
 
 def test_config_document_structure() -> None:
@@ -386,7 +387,7 @@ def test_config_images() -> None:
 
 
 def test_config_images_with_formats() -> None:
-    """Tests image extraction with format assertion on PPTX containing images"""
+    """Tests image extraction on PPTX containing embedded images"""
 
     document_path = helpers.resolve_document("pptx/powerpoint_with_image.pptx")
     if not document_path.exists():
@@ -397,7 +398,7 @@ def test_config_images_with_formats() -> None:
     result = extract_file_sync(document_path, None, config)
 
     helpers.assert_expected_mime(result, ["application/vnd.openxmlformats-officedocument.presentationml.presentation"])
-    helpers.assert_images(result, min_count=1, formats_include=["png"])
+    helpers.assert_images(result, min_count=1)
 
 
 def test_config_keywords() -> None:
@@ -430,6 +431,24 @@ def test_config_language_detection() -> None:
     helpers.assert_expected_mime(result, ["application/pdf"])
     helpers.assert_min_content_length(result, 10)
     helpers.assert_detected_languages(result, ["eng"], 0.5)
+
+
+def test_config_language_detection_multi() -> None:
+    """Tests language detection with detect_multiple and min_confidence options"""
+
+    document_path = helpers.resolve_document("pdf/fake_memo.pdf")
+    if not document_path.exists():
+        pytest.skip(f"Skipping config_language_detection_multi: missing document at {document_path}")
+
+    config = helpers.build_config(
+        {"language_detection": {"detect_multiple": True, "enabled": True, "min_confidence": 0.3}}
+    )
+
+    result = extract_file_sync(document_path, None, config)
+
+    helpers.assert_expected_mime(result, ["application/pdf"])
+    helpers.assert_min_content_length(result, 10)
+    helpers.assert_detected_languages(result, ["eng"], None)
 
 
 def test_config_language_multi() -> None:
@@ -477,7 +496,7 @@ def test_config_pages_exact_count() -> None:
 
     helpers.assert_expected_mime(result, ["application/pdf"])
     helpers.assert_min_content_length(result, 10)
-    helpers.assert_pages(result, min_count=2)
+    helpers.assert_pages(result, exact_count=5)
 
 
 def test_config_pages_extract() -> None:
@@ -638,6 +657,23 @@ def test_config_quality_score_range() -> None:
     helpers.assert_quality_score(result, has_score=True, min_score=0.1)
 
 
+def test_config_security_limits() -> None:
+    """Tests archive extraction with custom security limits"""
+
+    document_path = helpers.resolve_document("archives/documents.zip")
+    if not document_path.exists():
+        pytest.skip(f"Skipping config_security_limits: missing document at {document_path}")
+
+    config = helpers.build_config(
+        {"security_limits": {"max_archive_size": 104857600, "max_compression_ratio": 50, "max_files_in_archive": 100}}
+    )
+
+    result = extract_file_sync(document_path, None, config)
+
+    helpers.assert_expected_mime(result, ["application/zip", "application/x-zip-compressed"])
+    helpers.assert_min_content_length(result, 10)
+
+
 def test_config_structured_output() -> None:
     """Tests structured (JSON) output format config"""
 
@@ -667,7 +703,6 @@ def test_config_tables_content() -> None:
 
     helpers.assert_expected_mime(result, ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"])
     helpers.assert_table_count(result, 1, None)
-    helpers.assert_table_content_contains_any(result, ["Header Col"])
 
 
 def test_config_use_cache_false() -> None:

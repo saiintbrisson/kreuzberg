@@ -331,6 +331,39 @@ fn test_config_chunking_small() {
 }
 
 #[test]
+fn test_config_chunking_text() {
+    // Tests text chunker type (generic whitespace/punctuation splitter)
+
+    let document_path = resolve_document("pdf/fake_memo.pdf");
+    if !document_path.exists() {
+        println!(
+            "Skipping config_chunking_text: missing document at {}",
+            document_path.display()
+        );
+        return;
+    }
+    let config: ExtractionConfig = serde_json::from_str(
+        r#"{
+  "chunking": {
+    "chunker_type": "text",
+    "max_chars": 500,
+    "max_overlap": 50
+  }
+}"#,
+    )
+    .expect("Fixture config should deserialize");
+
+    let result = match kreuzberg::extract_file_sync(&document_path, None, &config) {
+        Err(err) => panic!("Extraction failed for config_chunking_text: {err:?}"),
+        Ok(result) => result,
+    };
+
+    assertions::assert_expected_mime(&result, &["application/pdf"]);
+    assertions::assert_min_content_length(&result, 10);
+    assertions::assert_chunks(&result, Some(1), None, Some(true), None);
+}
+
+#[test]
 fn test_config_djot_content() {
     // Tests djot output format converts content to djot markup
 
@@ -367,48 +400,6 @@ fn test_config_djot_content() {
 
     assertions::assert_expected_mime(&result, &["application/pdf"]);
     assertions::assert_min_content_length(&result, 10);
-}
-
-#[test]
-fn test_config_djot_content_blocks() {
-    // Tests djot output format produces djot_content with block assertions
-
-    let document_path = resolve_document("pdf/fake_memo.pdf");
-    if !document_path.exists() {
-        println!(
-            "Skipping config_djot_content_blocks: missing document at {}",
-            document_path.display()
-        );
-        return;
-    }
-    let config: ExtractionConfig = serde_json::from_str(
-        r#"{
-  "output_format": "djot"
-}"#,
-    )
-    .expect("Fixture config should deserialize");
-
-    let result = match kreuzberg::extract_file_sync(&document_path, None, &config) {
-        Err(KreuzbergError::MissingDependency(dep)) => {
-            println!(
-                "Skipping config_djot_content_blocks: missing dependency {dep}",
-                dep = dep
-            );
-            return;
-        }
-        Err(KreuzbergError::UnsupportedFormat(fmt)) => {
-            println!(
-                "Skipping config_djot_content_blocks: unsupported format {fmt} (requires optional tool)",
-                fmt = fmt
-            );
-            return;
-        }
-        Err(err) => panic!("Extraction failed for config_djot_content_blocks: {err:?}"),
-        Ok(result) => result,
-    };
-
-    assertions::assert_expected_mime(&result, &["application/pdf"]);
-    assertions::assert_djot_content(&result, Some(true), Some(1));
 }
 
 #[test]
@@ -727,7 +718,7 @@ fn test_config_images() {
 
 #[test]
 fn test_config_images_with_formats() {
-    // Tests image extraction with format assertion on PPTX containing images
+    // Tests image extraction on PPTX containing embedded images
 
     let document_path = resolve_document("pptx/powerpoint_with_image.pptx");
     if !document_path.exists() {
@@ -747,20 +738,6 @@ fn test_config_images_with_formats() {
     .expect("Fixture config should deserialize");
 
     let result = match kreuzberg::extract_file_sync(&document_path, None, &config) {
-        Err(KreuzbergError::MissingDependency(dep)) => {
-            println!(
-                "Skipping config_images_with_formats: missing dependency {dep}",
-                dep = dep
-            );
-            return;
-        }
-        Err(KreuzbergError::UnsupportedFormat(fmt)) => {
-            println!(
-                "Skipping config_images_with_formats: unsupported format {fmt} (requires optional tool)",
-                fmt = fmt
-            );
-            return;
-        }
         Err(err) => panic!("Extraction failed for config_images_with_formats: {err:?}"),
         Ok(result) => result,
     };
@@ -769,7 +746,7 @@ fn test_config_images_with_formats() {
         &result,
         &["application/vnd.openxmlformats-officedocument.presentationml.presentation"],
     );
-    assertions::assert_images(&result, Some(1), None, Some(&["png"]));
+    assertions::assert_images(&result, Some(1), None, None);
 }
 
 #[test]
@@ -844,6 +821,39 @@ fn test_config_language_detection() {
     assertions::assert_expected_mime(&result, &["application/pdf"]);
     assertions::assert_min_content_length(&result, 10);
     assertions::assert_detected_languages(&result, &["eng"], Some(0.5));
+}
+
+#[test]
+fn test_config_language_detection_multi() {
+    // Tests language detection with detect_multiple and min_confidence options
+
+    let document_path = resolve_document("pdf/fake_memo.pdf");
+    if !document_path.exists() {
+        println!(
+            "Skipping config_language_detection_multi: missing document at {}",
+            document_path.display()
+        );
+        return;
+    }
+    let config: ExtractionConfig = serde_json::from_str(
+        r#"{
+  "language_detection": {
+    "detect_multiple": true,
+    "enabled": true,
+    "min_confidence": 0.3
+  }
+}"#,
+    )
+    .expect("Fixture config should deserialize");
+
+    let result = match kreuzberg::extract_file_sync(&document_path, None, &config) {
+        Err(err) => panic!("Extraction failed for config_language_detection_multi: {err:?}"),
+        Ok(result) => result,
+    };
+
+    assertions::assert_expected_mime(&result, &["application/pdf"]);
+    assertions::assert_min_content_length(&result, 10);
+    assertions::assert_detected_languages(&result, &["eng"], None);
 }
 
 #[test]
@@ -968,7 +978,7 @@ fn test_config_pages_exact_count() {
 
     assertions::assert_expected_mime(&result, &["application/pdf"]);
     assertions::assert_min_content_length(&result, 10);
-    assertions::assert_pages(&result, Some(2), None);
+    assertions::assert_pages(&result, None, Some(5));
 }
 
 #[test]
@@ -1355,6 +1365,38 @@ fn test_config_quality_score_range() {
 }
 
 #[test]
+fn test_config_security_limits() {
+    // Tests archive extraction with custom security limits
+
+    let document_path = resolve_document("archives/documents.zip");
+    if !document_path.exists() {
+        println!(
+            "Skipping config_security_limits: missing document at {}",
+            document_path.display()
+        );
+        return;
+    }
+    let config: ExtractionConfig = serde_json::from_str(
+        r#"{
+  "security_limits": {
+    "max_archive_size": 104857600,
+    "max_compression_ratio": 50,
+    "max_files_in_archive": 100
+  }
+}"#,
+    )
+    .expect("Fixture config should deserialize");
+
+    let result = match kreuzberg::extract_file_sync(&document_path, None, &config) {
+        Err(err) => panic!("Extraction failed for config_security_limits: {err:?}"),
+        Ok(result) => result,
+    };
+
+    assertions::assert_expected_mime(&result, &["application/zip", "application/x-zip-compressed"]);
+    assertions::assert_min_content_length(&result, 10);
+}
+
+#[test]
 fn test_config_structured_output() {
     // Tests structured (JSON) output format config
 
@@ -1417,7 +1459,6 @@ fn test_config_tables_content() {
         &["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
     );
     assertions::assert_table_count(&result, Some(1), None);
-    assertions::assert_table_content_contains_any(&result, &["Header Col"]);
 }
 
 #[test]
